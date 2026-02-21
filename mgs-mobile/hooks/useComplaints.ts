@@ -11,6 +11,8 @@ export interface Complaint {
     createdAt: string;
     category: string;
     priority: number;
+    imageUrl?: string;
+    address?: string;
 }
 
 

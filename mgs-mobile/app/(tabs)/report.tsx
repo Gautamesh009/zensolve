@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Image, TextInput, Alert, ActivityIndicator } from "react-native";
-import { Camera, MapPin, X } from "lucide-react-native";
+import { Camera, MapPin, X, Info } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
@@ -28,18 +28,21 @@ export default function Report() {
             return;
         }
 
-        let loc = await Location.getCurrentPositionAsync({});
-        setLocation(loc);
+        try {
+            let loc = await Location.getCurrentPositionAsync({});
+            setLocation(loc);
 
-        // Reverse geocode
-        let reverse = await Location.reverseGeocodeAsync({
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude
-        });
+            let reverse = await Location.reverseGeocodeAsync({
+                latitude: loc.coords.latitude,
+                longitude: loc.coords.longitude
+            });
 
-        if (reverse.length > 0) {
-            const { name, street, city } = reverse[0];
-            setAddress(`${name || street}, ${city}`);
+            if (reverse.length > 0) {
+                const { name, street, city } = reverse[0];
+                setAddress(`${name || street || ''}, ${city || ''}`.replace(/^, /, ''));
+            }
+        } catch (e) {
+            setAddress("Location unavailable");
         }
     }
 
@@ -92,91 +95,120 @@ export default function Report() {
     }
 
     return (
-        <ScrollView className="flex-1 bg-white p-6">
-            <Text className="text-2xl font-bold text-gray-900 mb-6">Report an Issue</Text>
+        <ScrollView className="flex-1 bg-surface-50" showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View className="px-6 pt-12 pb-6 bg-white border-b border-surface-200">
+                <Text className="text-3xl font-bold text-surface-900">Report Issue</Text>
+                <Text className="text-surface-900/50 text-sm">Fill in the details to submit your report</Text>
+            </View>
 
-            {image ? (
-                <View className="relative mb-6">
-                    <Image source={{ uri: image }} className="w-full h-64 rounded-2xl" />
-                    <TouchableOpacity
-                        className="absolute top-2 right-2 bg-black/50 p-2 rounded-full"
-                        onPress={() => setImage(null)}
-                    >
-                        <X size={20} color="white" />
+            <View className="p-6">
+                {/* Image Section */}
+                <View className="mb-8">
+                    <Text className="text-sm font-bold text-surface-900 uppercase tracking-widest mb-3">Evidence Photo</Text>
+                    {image ? (
+                        <View className="relative">
+                            <Image source={{ uri: image }} className="w-full h-64 rounded-3xl" />
+                            <TouchableOpacity
+                                className="absolute top-4 right-4 bg-black/60 p-2 rounded-full shadow-lg"
+                                onPress={() => setImage(null)}
+                            >
+                                <X size={20} color="white" />
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <TouchableOpacity
+                            className="bg-white h-52 rounded-3xl items-center justify-center border-2 border-dashed border-primary-200 shadow-sm"
+                            onPress={handlePickImage}
+                        >
+                            <View className="bg-primary-50 p-4 rounded-full mb-3">
+                                <Camera size={32} color="#2563eb" />
+                            </View>
+                            <Text className="text-primary-600 font-bold">Capture Grievance Photo</Text>
+                            <Text className="text-surface-900/30 text-xs mt-1">Image will be used for AI verification</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Location Banner */}
+                <View className="bg-white p-4 rounded-3xl border border-surface-200 flex-row items-center mb-8 shadow-sm">
+                    <View className="bg-primary-500 p-2.5 rounded-2xl mr-4">
+                        <MapPin size={20} color="white" />
+                    </View>
+                    <View className="flex-1">
+                        <Text className="text-surface-900 font-bold text-xs uppercase opacity-40">Issue Location</Text>
+                        <Text className="text-surface-900 font-bold text-sm" numberOfLines={1}>{address}</Text>
+                    </View>
+                    <TouchableOpacity onPress={handleGetLocation} className="bg-surface-50 px-4 py-2 rounded-xl">
+                        <Text className="text-primary-600 font-bold text-xs">Verify</Text>
                     </TouchableOpacity>
                 </View>
-            ) : (
-                <TouchableOpacity
-                    className="bg-gray-100 h-48 rounded-2xl items-center justify-center border-2 border-dashed border-gray-300 mb-6"
-                    onPress={handlePickImage}
-                >
-                    <Camera size={48} color="#9ca3af" />
-                    <Text className="text-gray-500 mt-2 font-medium">Capture Grievance Photo</Text>
-                </TouchableOpacity>
-            )}
 
-            <View className="bg-blue-50 p-4 rounded-xl flex-row items-center mb-6">
-                <MapPin size={20} color="#2563eb" />
-                <View className="ml-3 flex-1">
-                    <Text className="text-blue-900 font-semibold">Location</Text>
-                    <Text className="text-blue-700 text-xs" numberOfLines={1}>{address}</Text>
+                {/* Form Fields */}
+                <View className="space-y-6">
+                    <View>
+                        <Text className="text-sm font-bold text-surface-900 uppercase tracking-widest mb-2 ml-1">Subject</Text>
+                        <TextInput
+                            className="bg-white border border-surface-200 rounded-2xl p-4 text-surface-900 shadow-sm focus:border-primary-500"
+                            placeholder="What's the issue?"
+                            placeholderTextColor="#a1a1aa"
+                            value={title}
+                            onChangeText={setTitle}
+                        />
+                    </View>
+
+                    <View>
+                        <Text className="text-sm font-bold text-surface-900 uppercase tracking-widest mb-2 ml-1">Description</Text>
+                        <TextInput
+                            className="bg-white border border-surface-200 rounded-2xl p-4 h-32 text-surface-900 shadow-sm focus:border-primary-500"
+                            placeholder="Provide more context for faster resolution..."
+                            placeholderTextColor="#a1a1aa"
+                            multiline
+                            textAlignVertical="top"
+                            value={description}
+                            onChangeText={setDescription}
+                        />
+                    </View>
+
+                    <View>
+                        <View className="flex-row justify-between items-center mb-3">
+                            <Text className="text-sm font-bold text-surface-900 uppercase tracking-widest ml-1">Category</Text>
+                            <View className="flex-row items-center bg-blue-50 px-3 py-1 rounded-full">
+                                <Info size={12} color="#2563eb" />
+                                <Text className="text-primary-600 text-[10px] font-bold ml-1">AI Verified</Text>
+                            </View>
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row pb-2">
+                            {Object.values(CATEGORIES).map((cat) => (
+                                <TouchableOpacity
+                                    key={cat.id}
+                                    className={`mr-3 px-6 py-3 rounded-2xl border ${category === cat.id ? 'bg-primary-600 border-primary-600 shadow-md shadow-primary-500/30' : 'bg-white border-surface-200 shadow-sm'}`}
+                                    onPress={() => setCategory(cat.id)}
+                                >
+                                    <Text className={`font-bold ${category === cat.id ? 'text-white' : 'text-surface-900/60'}`}>{cat.name}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
                 </View>
-                <TouchableOpacity onPress={handleGetLocation}>
-                    <Text className="text-blue-600 text-xs font-bold">Refresh</Text>
+
+                {/* Submit Button */}
+                <TouchableOpacity
+                    className={`mt-10 bg-primary-600 py-5 rounded-3xl items-center shadow-xl shadow-primary-500/40 ${loading ? 'opacity-70' : ''}`}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="white" />
+                    ) : (
+                        <Text className="text-white text-lg font-bold uppercase tracking-[2px]">Submit Grievance</Text>
+                    )}
                 </TouchableOpacity>
-            </View>
-
-            <View className="mb-6">
-                <Text className="text-sm font-semibold text-gray-700 mb-2">Subject</Text>
-                <TextInput
-                    className="border border-gray-200 rounded-lg p-3"
-                    placeholder="Short title of the issue"
-                    value={title}
-                    onChangeText={setTitle}
-                />
-            </View>
-
-            <View className="mb-6">
-                <Text className="text-sm font-semibold text-gray-700 mb-2">Detailed Description</Text>
-                <TextInput
-                    className="border border-gray-200 rounded-lg p-3 h-32"
-                    placeholder="Describe the issue in detail..."
-                    multiline
-                    textAlignVertical="top"
-                    value={description}
-                    onChangeText={setDescription}
-                />
-            </View>
-
-            <View className="mb-8">
-                <Text className="text-sm font-semibold text-gray-700 mb-2">Category (Initial Selection)</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-                    {Object.values(CATEGORIES).map((cat) => (
-                        <TouchableOpacity
-                            key={cat.id}
-                            className={`mr-2 px-4 py-2 rounded-full border ${category === cat.id ? 'bg-blue-600 border-blue-600' : 'bg-gray-100 border-gray-100'}`}
-                            onPress={() => setCategory(cat.id)}
-                        >
-                            <Text className={category === cat.id ? 'text-white' : 'text-gray-700'}>{cat.name}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-                <Text className="text-gray-400 text-[10px] mt-2 italic">
-                    * AI will refine the category and priority during processing.
+                <Text className="text-center text-surface-900/30 text-[10px] mt-6 font-bold uppercase mb-12">
+                    Powered by Google Gemini 1.5 Flash
                 </Text>
             </View>
-
-            <TouchableOpacity
-                className={`bg-blue-600 py-4 rounded-xl items-center mb-10 ${loading ? 'opacity-70' : ''}`}
-                onPress={handleSubmit}
-                disabled={loading}
-            >
-                {loading ? (
-                    <ActivityIndicator color="white" />
-                ) : (
-                    <Text className="text-white text-lg font-bold">Submit Grievance</Text>
-                )}
-            </TouchableOpacity>
         </ScrollView>
     );
 }
+
