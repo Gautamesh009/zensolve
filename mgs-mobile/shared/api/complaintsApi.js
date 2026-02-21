@@ -2,11 +2,7 @@ import axiosInstance from "./axios";
 
 export const complaintsApi = {
     submit: async (formData) => {
-        const { data } = await axiosInstance.post("/complaints", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+        const { data } = await axiosInstance.post("/complaints", formData);
         return data;
     },
 

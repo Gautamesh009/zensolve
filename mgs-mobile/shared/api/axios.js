@@ -1,6 +1,11 @@
 import axios from "axios";
+import { Platform } from "react-native";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000/api";
+const defaultApiUrl = Platform.OS === "android"
+    ? "http://10.0.2.2:5000/api"
+    : "http://localhost:5000/api";
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || defaultApiUrl;
 
 const axiosInstance = axios.create({
     baseURL: API_URL,
