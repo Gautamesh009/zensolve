@@ -4,6 +4,13 @@ import { STATUS } from "../../shared/constants/status";
 import { useComplaints } from "../../hooks/useComplaints";
 import { Calendar, ChevronRight, Inbox, MapPin } from "lucide-react-native";
 
+const STATUS_STYLES: Record<string, { container: string; text: string }> = {
+    PENDING: { container: "bg-amber-50 border-amber-200", text: "text-amber-700" },
+    IN_PROGRESS: { container: "bg-blue-50 border-blue-200", text: "text-blue-700" },
+    RESOLVED: { container: "bg-green-50 border-green-200", text: "text-green-700" },
+    REJECTED: { container: "bg-rose-50 border-rose-200", text: "text-rose-700" },
+};
+
 export default function Complaints() {
     const router = useRouter();
     const { complaints, loading, refetch } = useComplaints();
@@ -19,7 +26,6 @@ export default function Complaints() {
 
     return (
         <View className="flex-1 bg-surface-50">
-            {/* Custom Header */}
             <View className="px-6 pt-16 pb-6 bg-white border-b border-surface-200">
                 <Text className="text-3xl font-black text-surface-900 tracking-tight">Active Track</Text>
                 <Text className="text-surface-900/50 text-sm font-medium">Monitor your submitted grievances</Text>
@@ -40,7 +46,9 @@ export default function Complaints() {
                     </View>
                 }
                 renderItem={({ item }) => {
-                    const statusInfo = (STATUS as any)[item.status] || { name: item.status, color: "gray" };
+                    const statusInfo = (STATUS as any)[item.status] || { name: item.status };
+                    const statusStyles = STATUS_STYLES[item.status] || { container: "bg-surface-100 border-surface-200", text: "text-surface-900" };
+
                     return (
                         <TouchableOpacity
                             activeOpacity={0.7}
@@ -80,12 +88,12 @@ export default function Complaints() {
                                         <View className="flex-row items-center">
                                             <Calendar size={12} color="#a1a1aa" />
                                             <Text className="text-surface-900/30 text-[10px] font-medium ml-1">
-                                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Pending'}
+                                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Pending"}
                                             </Text>
                                         </View>
 
-                                        <View className={`px-3 py-1 rounded-full bg-${statusInfo.color}-50 border border-${statusInfo.color}-100`}>
-                                            <Text className={`text-${statusInfo.color}-700 text-[9px] font-black uppercase tracking-wider`}>
+                                        <View className={`px-3 py-1 rounded-full border ${statusStyles.container}`}>
+                                            <Text className={`text-[9px] font-black uppercase tracking-wider ${statusStyles.text}`}>
                                                 {statusInfo.name}
                                             </Text>
                                         </View>
@@ -99,4 +107,3 @@ export default function Complaints() {
         </View>
     );
 }
-
